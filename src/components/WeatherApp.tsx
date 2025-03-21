@@ -78,29 +78,24 @@ export function WeatherApp(): React.ReactElement {
     }
   };
 
-  const getLocation = () => {
-    if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser");
-      return;
-    }
-
-    setLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        fetchWeatherByCoords(
-          position.coords.latitude,
-          position.coords.longitude,
-        );
-      },
-      (_err) => {
-        setError("Unable to retrieve your location");
-        setLoading(false);
-      },
-    );
-  };
-
+  // Get location on initial load
   useEffect(() => {
-    getLocation();
+    // Get location on component mount
+    if (navigator.geolocation) {
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          fetchWeatherByCoords(
+            position.coords.latitude,
+            position.coords.longitude,
+          );
+        },
+        (_err) => {
+          setError("Unable to retrieve your location");
+          setLoading(false);
+        },
+      );
+    }
   }, []);
 
   return (
@@ -128,14 +123,6 @@ export function WeatherApp(): React.ReactElement {
           disabled={loading}
         >
           {loading ? "Loading..." : "Search"}
-        </button>
-        <button
-          type="button"
-          style={styles.button}
-          onClick={getLocation}
-          disabled={loading}
-        >
-          Use My Location
         </button>
       </div>
 
