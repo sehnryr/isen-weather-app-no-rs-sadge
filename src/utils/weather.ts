@@ -1,4 +1,5 @@
 import { Weather } from "../types/weather";
+import { GeocodeResponse } from "../types/geocode";
 
 export function getSimpleOutfitTip(weather: Weather): string[] {
   const tips: string[] = [];
@@ -27,7 +28,7 @@ export async function reverseGeocode(
   if (!response.ok) {
     throw new Error("Unable to get location name");
   }
-  const data = await response.json();
+  const data: GeocodeResponse = await response.json();
   const cityName = data.address?.city;
   if (!cityName) {
     throw new Error("Unable to determine your city");
