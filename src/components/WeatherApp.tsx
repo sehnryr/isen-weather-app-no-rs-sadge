@@ -16,13 +16,13 @@ export function WeatherApp(): React.ReactElement {
     // Update dark mode when system preference changes
     const darkModeQuery = globalThis.matchMedia("(prefers-color-scheme: dark)");
     const updateDarkMode = () => setDarkMode(isDarkMode());
-    darkModeQuery.addListener(updateDarkMode);
+    darkModeQuery.addEventListener("change", updateDarkMode);
 
     // Update dark mode every minute to check for time changes
     const timeInterval = setInterval(updateDarkMode, 60000);
 
     return () => {
-      darkModeQuery.removeListener(updateDarkMode);
+      darkModeQuery.removeEventListener("change", updateDarkMode);
       clearInterval(timeInterval);
     };
   }, []);
@@ -33,12 +33,12 @@ export function WeatherApp(): React.ReactElement {
       setOffline(isOffline());
     };
 
-    window.addEventListener("online", handleOnlineStatusChange);
-    window.addEventListener("offline", handleOnlineStatusChange);
+    globalThis.addEventListener("online", handleOnlineStatusChange);
+    globalThis.addEventListener("offline", handleOnlineStatusChange);
 
     return () => {
-      window.removeEventListener("online", handleOnlineStatusChange);
-      window.removeEventListener("offline", handleOnlineStatusChange);
+      globalThis.removeEventListener("online", handleOnlineStatusChange);
+      globalThis.removeEventListener("offline", handleOnlineStatusChange);
     };
   }, []);
 
