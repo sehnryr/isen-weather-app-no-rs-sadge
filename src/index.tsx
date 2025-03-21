@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 
 interface Weather {
@@ -17,9 +17,55 @@ function WeatherApp(): React.ReactElement {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const reverseGeocode = async (
+    latitude: number,
+    longitude: number,
+  ): Promise<string> => {
+    const response = await fetch(
+      `/geo/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+    );
+    if (!response.ok) {
+      throw new Error("Unable to get location name");
+    }
+    const data = await response.json();
+    const cityName = data.address?.city;
+    if (!cityName) {
+      throw new Error("Unable to determine your city");
+    }
+    return cityName;
+  };
+
+  const fetchWeatherByCoords = async (
+    latitude: number,
+    longitude: number,
+  ): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      // First, get the city name from coordinates using reverse geocoding
+      const cityName = await reverseGeocode(latitude, longitude);
+
+      // Then fetch weather using the city name
+      const response = await fetch(`/api/v1/weathers?search=${cityName}`);
+      if (!response.ok) {
+        throw new Error("Weather data not found");
+      }
+      const data = await response.json();
+      if (!data || data.length === 0) {
+        throw new Error("Weather data not found");
+      }
+      setWeather(data[0]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      setWeather(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchWeather = async (): Promise<void> => {
     if (!city.trim()) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -40,27 +86,61 @@ function WeatherApp(): React.ReactElement {
     }
   };
 
+  const getLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        fetchWeatherByCoords(
+          position.coords.latitude,
+          position.coords.longitude,
+        );
+      },
+      (_err) => {
+        setError("Unable to retrieve your location");
+        setLoading(false);
+      },
+    );
+  };
+
+  useEffect(() => {
+    getLocation(); // Ask for location when component mounts
+  }, []);
+
   return (
     <div>
       <h1>Weather</h1>
-      
+
       <div>
         <input
           type="text"
           value={city}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCity(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setCity(e.target.value)}
           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter') {
+            if (e.key === "Enter") {
               fetchWeather();
             }
           }}
           placeholder="Enter a city name"
         />
         <button
+          type="button"
           onClick={fetchWeather}
           disabled={loading}
         >
           {loading ? "Loading..." : "Search"}
+        </button>
+        <button
+          type="button"
+          onClick={getLocation}
+          disabled={loading}
+        >
+          Use My Location
         </button>
       </div>
 
