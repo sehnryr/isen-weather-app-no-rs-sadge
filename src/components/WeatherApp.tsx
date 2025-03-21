@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Weather } from "../types/weather";
 import { getSimpleOutfitTip, reverseGeocode } from "../utils/weather";
-import { isDarkMode, getThemeStyles } from "../utils/theme";
+import { isDarkMode, getThemeStyles, applyThemeToBody } from "../utils/theme";
 import { saveWeatherData, getCachedWeatherData, isOffline } from "../utils/storage";
 
 export function WeatherApp(): React.ReactElement {
@@ -15,11 +15,18 @@ export function WeatherApp(): React.ReactElement {
   useEffect(() => {
     // Update dark mode when system preference changes
     const darkModeQuery = globalThis.matchMedia("(prefers-color-scheme: dark)");
-    const updateDarkMode = () => setDarkMode(isDarkMode());
+    const updateDarkMode = () => {
+      const newDarkMode = isDarkMode();
+      setDarkMode(newDarkMode);
+      applyThemeToBody(newDarkMode);
+    };
     darkModeQuery.addEventListener("change", updateDarkMode);
 
     // Update dark mode every minute to check for time changes
     const timeInterval = setInterval(updateDarkMode, 60000);
+
+    // Apply theme immediately
+    applyThemeToBody(darkMode);
 
     return () => {
       darkModeQuery.removeEventListener("change", updateDarkMode);
@@ -156,7 +163,7 @@ export function WeatherApp(): React.ReactElement {
   }, []);
 
   return (
-    <div style={styles.container}>
+    <div>
       <h1>Weather</h1>
 
       {offline && (

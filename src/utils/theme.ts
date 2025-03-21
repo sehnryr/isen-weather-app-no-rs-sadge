@@ -12,31 +12,26 @@ export function isDarkMode(): boolean {
   return hour < 6 || hour >= 18;
 }
 
+// Apply theme directly to document body
+export function applyThemeToBody(darkMode: boolean): void {
+  if (typeof document !== "undefined") {
+    document.body.style.backgroundColor = darkMode ? "#1a1a1a" : "#ffffff";
+    document.body.style.color = darkMode ? "#ffffff" : "#000000";
+  }
+}
+
 export const getThemeStyles = (darkMode: boolean) => ({
-  container: {
-    backgroundColor: darkMode ? "#1a1a1a" : "#ffffff",
-    color: darkMode ? "#ffffff" : "#000000",
-    minHeight: "100vh",
-    padding: "20px",
-  },
   input: {
     backgroundColor: darkMode ? "#333" : "#fff",
     color: darkMode ? "#fff" : "#000",
     border: `1px solid ${darkMode ? "#666" : "#ccc"}`,
-    padding: "8px",
-    borderRadius: "4px",
   },
   button: {
     backgroundColor: darkMode ? "#444" : "#f0f0f0",
     color: darkMode ? "#fff" : "#000",
-    border: "none",
-    padding: "8px 16px",
-    margin: "0 4px",
-    borderRadius: "4px",
-    cursor: "pointer",
+    border: `1px solid ${darkMode ? "#666" : "#ccc"}`,
   },
   error: {
     color: darkMode ? "#ff6b6b" : "#dc3545",
-    marginTop: "10px",
   },
 });
