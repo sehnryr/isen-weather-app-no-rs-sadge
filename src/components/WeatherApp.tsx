@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Weather } from "../types/weather";
 import { getSimpleOutfitTip, reverseGeocode } from "../utils/weather";
 import { isDarkMode, getThemeStyles } from "../utils/theme";
+import { saveWeatherData, getCachedWeatherData, isOffline } from "../utils/storage";
 
 export function WeatherApp(): React.ReactElement {
   const [city, setCity] = useState<string>("");
@@ -9,6 +10,7 @@ export function WeatherApp(): React.ReactElement {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState<boolean>(isDarkMode());
+  const [offline, setOffline] = useState<boolean>(isOffline());
 
   useEffect(() => {
     // Update dark mode when system preference changes
@@ -25,12 +27,48 @@ export function WeatherApp(): React.ReactElement {
     };
   }, []);
 
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnlineStatusChange = () => {
+      setOffline(isOffline());
+    };
+
+    window.addEventListener("online", handleOnlineStatusChange);
+    window.addEventListener("offline", handleOnlineStatusChange);
+
+    return () => {
+      window.removeEventListener("online", handleOnlineStatusChange);
+      window.removeEventListener("offline", handleOnlineStatusChange);
+    };
+  }, []);
+
+  // Load cached data on initial load
+  useEffect(() => {
+    const cachedData = getCachedWeatherData();
+    if (cachedData) {
+      setWeather(cachedData);
+      setCity(cachedData.city);
+    }
+  }, []);
+
   const styles = getThemeStyles(darkMode);
 
   const fetchWeatherByCoords = async (
     latitude: number,
     longitude: number,
   ): Promise<void> => {
+    if (offline) {
+      const cachedData = getCachedWeatherData();
+      if (cachedData) {
+        setWeather(cachedData);
+        setError("You are offline. Showing cached data.");
+      } else {
+        setError("You are offline and no cached data is available.");
+      }
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -46,7 +84,11 @@ export function WeatherApp(): React.ReactElement {
       if (!data || data.length === 0) {
         throw new Error("Weather data not found");
       }
-      setWeather(data[0]);
+      const weatherData = data[0];
+      setWeather(weatherData);
+      
+      // Save to localStorage for offline access
+      saveWeatherData(weatherData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       setWeather(null);
@@ -57,6 +99,17 @@ export function WeatherApp(): React.ReactElement {
 
   const fetchWeather = async (): Promise<void> => {
     if (!city.trim()) return;
+
+    if (offline) {
+      const cachedData = getCachedWeatherData(city);
+      if (cachedData) {
+        setWeather(cachedData);
+        setError("You are offline. Showing cached data.");
+      } else {
+        setError("You are offline and no cached data is available for this city.");
+      }
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -69,7 +122,11 @@ export function WeatherApp(): React.ReactElement {
       if (!data || data.length === 0) {
         throw new Error("City not found");
       }
-      setWeather(data[0]);
+      const weatherData = data[0];
+      setWeather(weatherData);
+      
+      // Save to localStorage for offline access
+      saveWeatherData(weatherData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       setWeather(null);
@@ -101,6 +158,12 @@ export function WeatherApp(): React.ReactElement {
   return (
     <div style={styles.container}>
       <h1>Weather</h1>
+
+      {offline && (
+        <div style={styles.error}>
+          Offline Mode - Using cached data
+        </div>
+      )}
 
       <div>
         <input
