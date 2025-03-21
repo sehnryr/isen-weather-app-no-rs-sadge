@@ -11,6 +11,23 @@ interface Weather {
   wind_speed: number;
 }
 
+function getSimpleOutfitTip(weather: Weather): string[] {
+  const tips: string[] = [];
+
+  // Temperature-based tips
+  if (weather.temperature <= 15) {
+    tips.push("Wear a coat");
+  }
+
+  // Weather condition tips
+  const description = weather.weather_description.toLowerCase();
+  if (description.includes("rain") || description.includes("shower")) {
+    tips.push("Bring an umbrella");
+  }
+
+  return tips;
+}
+
 function WeatherApp(): React.ReactElement {
   const [city, setCity] = useState<string>("");
   const [weather, setWeather] = useState<Weather | null>(null);
@@ -157,6 +174,21 @@ function WeatherApp(): React.ReactElement {
           <div>{weather.weather_description}</div>
           <div>Humidity: {weather.humidity}%</div>
           <div>Wind: {weather.wind_speed} km/h</div>
+          <div>
+            {(() => {
+              const tips = getSimpleOutfitTip(weather);
+              return tips.length > 0
+                ? (
+                  <div>
+                    <h3>Tips:</h3>
+                    <ul>
+                      {tips.map((tip, index) => <li key={index}>{tip}</li>)}
+                    </ul>
+                  </div>
+                )
+                : null;
+            })()}
+          </div>
         </div>
       )}
     </div>
