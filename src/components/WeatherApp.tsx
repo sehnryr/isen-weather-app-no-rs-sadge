@@ -3,6 +3,7 @@ import { Weather } from "../types/weather";
 import { getSimpleOutfitTip, reverseGeocode } from "../utils/weather";
 import { isDarkMode, getThemeStyles, applyThemeToBody } from "../utils/theme";
 import { saveWeatherData, getCachedWeatherData, isOffline } from "../utils/storage";
+import { getWeatherApiUrl } from "../utils/environment";
 
 export function WeatherApp(): React.ReactElement {
   const [city, setCity] = useState<string>("");
@@ -83,7 +84,8 @@ export function WeatherApp(): React.ReactElement {
       const cityName = await reverseGeocode(latitude, longitude);
 
       // Then fetch weather using the city name
-      const response = await fetch(`/api/v1/weathers?search=${cityName}`);
+      const weatherApiUrl = getWeatherApiUrl();
+      const response = await fetch(`${weatherApiUrl}?search=${cityName}`);
       if (!response.ok) {
         throw new Error("Weather data not found");
       }
@@ -121,7 +123,8 @@ export function WeatherApp(): React.ReactElement {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/v1/weathers?search=${city}`);
+      const weatherApiUrl = getWeatherApiUrl();
+      const response = await fetch(`${weatherApiUrl}?search=${city}`);
       if (!response.ok) {
         throw new Error("City not found");
       }

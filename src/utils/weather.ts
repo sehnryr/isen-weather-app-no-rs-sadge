@@ -1,5 +1,6 @@
 import { Weather } from "../types/weather";
 import { GeocodeResponse } from "../types/geocode";
+import { getGeocodingUrl } from "./environment";
 
 export function getSimpleOutfitTip(weather: Weather): string[] {
   const tips: string[] = [];
@@ -22,8 +23,9 @@ export async function reverseGeocode(
   latitude: number,
   longitude: number,
 ): Promise<string> {
+  const geocodingUrl = getGeocodingUrl();
   const response = await fetch(
-    `/geo/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+    `${geocodingUrl}?format=json&lat=${latitude}&lon=${longitude}`,
   );
   if (!response.ok) {
     throw new Error("Unable to get location name");
